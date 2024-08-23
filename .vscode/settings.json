@@ -1,0 +1,19 @@
+{
+    "files.associations": {
+        "random": "cpp",
+        "future": "cpp",
+        "serial.h": "c",
+        "functional": "cpp",
+        "chrono": "c",
+        "typeindex": "c",
+        "typeinfo": "c"
+    },
+    "python.autoComplete.extraPaths": [
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}
