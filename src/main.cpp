@@ -19,6 +19,7 @@
 #include "lifecycle_msgs/msg/transition.hpp"
 #include "std_msgs/msg/float32.hpp"
 #include "geometry_msgs/msg/twist.hpp"
+#include "std_msgs/msg/int16.hpp"
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -39,9 +40,14 @@ public:
     on_configure(const rclcpp_lifecycle::State &)
     {
         RCLCPP_INFO(get_logger(), "on_configure() is called.");
-        timer_ = this->create_wall_timer(500ms, std::bind(&rhspNode::sendUpdate, this));
+        timer_ = this->create_wall_timer(10ms, std::bind(&rhspNode::sendUpdate, this));
+
         floatSubscriber = this->create_subscription<std_msgs::msg::Float32>("garra", 10, std::bind(&rhspNode::servoCallback, this, _1));
         cmdSubscriber = this->create_subscription<geometry_msgs::msg::Twist>("cmd_vel", 10, std::bind(&rhspNode::twistCallback, this, _1));
+        m0v_publisher_ = this->create_publisher<std_msgs::msg::Int16>("m0/speed", 10);
+        m1v_publisher_ = this->create_publisher<std_msgs::msg::Int16>("m1/speed", 10);
+        m2v_publisher_ = this->create_publisher<std_msgs::msg::Int16>("m2/speed", 10);
+        m3v_publisher_ = this->create_publisher<std_msgs::msg::Int16>("m2/speed", 10);
         if (!serial)
         {
             serial = new RhspSerial();
@@ -176,7 +182,25 @@ private:
     }
 
     void sendUpdate(){
-        rhsp_sendKeepAlive(hub, nullptr);
+        uint8_t ack;
+        RhspBulkInputData a;
+
+        if(rhsp_getBulkInputData(hub, &a, &ack) == RHSP_RESULT_OK){
+            m0v_publisher_->publish(std_msgs::msg::Int16().set__data(
+                a.motor0velocity_cps
+            ));
+            m1v_publisher_->publish(std_msgs::msg::Int16().set__data(
+                a.motor1velocity_cps
+            ));
+            m2v_publisher_->publish(std_msgs::msg::Int16().set__data(
+                a.motor2velocity_cps
+            ));
+            m3v_publisher_->publish(std_msgs::msg::Int16().set__data(
+                a.motor3velocity_cps
+            ));
+        }else{
+            RCLCPP_WARN(get_logger(), "bulk read err, returned %d", ack);
+        }
     }
 
     RhspRevHub *hub;
@@ -184,6 +208,11 @@ private:
     std::shared_ptr<rclcpp::TimerBase> timer_;
     rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr floatSubscriber;
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmdSubscriber;
+
+    rclcpp::Publisher<std_msgs::msg::Int16>::SharedPtr m0v_publisher_;
+    rclcpp::Publisher<std_msgs::msg::Int16>::SharedPtr m1v_publisher_;
+    rclcpp::Publisher<std_msgs::msg::Int16>::SharedPtr m2v_publisher_;
+    rclcpp::Publisher<std_msgs::msg::Int16>::SharedPtr m3v_publisher_;
 };
 
 int main(int argc, char *argv[])
