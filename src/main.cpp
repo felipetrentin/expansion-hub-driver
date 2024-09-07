@@ -186,24 +186,25 @@ private:
     }
 
     void sendUpdate(){
-        uint8_t ack;
+        uint8_t ack = 0;
         RhspBulkInputData a;
-
-        if(rhsp_getBulkInputData(hub, &a, &ack) == RHSP_RESULT_OK){
-            m0v_publisher_->publish(std_msgs::msg::Int16().set__data(
-                a.motor0velocity_cps
-            ));
-            m1v_publisher_->publish(std_msgs::msg::Int16().set__data(
-                a.motor1velocity_cps
-            ));
-            m2v_publisher_->publish(std_msgs::msg::Int16().set__data(
-                a.motor2velocity_cps
-            ));
-            m3v_publisher_->publish(std_msgs::msg::Int16().set__data(
-                a.motor3velocity_cps
-            ));
-        }else{
-            RCLCPP_WARN(get_logger(), "bulk read err, returned %d", ack);
+        if(rhsp_isOpened(hub)){
+            if(rhsp_getBulkInputData(hub, &a, &ack) == RHSP_RESULT_OK){
+                m0v_publisher_->publish(std_msgs::msg::Int16().set__data(
+                    a.motor0velocity_cps
+                ));
+                m1v_publisher_->publish(std_msgs::msg::Int16().set__data(
+                    a.motor1velocity_cps
+                ));
+                m2v_publisher_->publish(std_msgs::msg::Int16().set__data(
+                    a.motor2velocity_cps
+                ));
+                m3v_publisher_->publish(std_msgs::msg::Int16().set__data(
+                    a.motor3velocity_cps
+                ));
+            }else{
+                RCLCPP_WARN(get_logger(), "bulk read err, returned %d", ack);
+            }
         }
     }
 
