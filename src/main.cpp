@@ -170,15 +170,19 @@ private:
 
     void twistCallback(const geometry_msgs::msg::Twist::SharedPtr msg){
         uint8_t ack;
-        TICK_PER_RADIANS;
-        float m0 = (msg->linear.x + msg->linear.y - (L_SUM)*msg->angular.z)/WHEEL_RADIUS;
-        float m1 = (msg->linear.x - msg->linear.y + (L_SUM)*msg->angular.z)/WHEEL_RADIUS;
-        float m2 = (msg->linear.x - msg->linear.y - (L_SUM)*msg->angular.z)/WHEEL_RADIUS;
-        float m3 = (msg->linear.x + msg->linear.y + (L_SUM)*msg->angular.z)/WHEEL_RADIUS;
-        rhsp_setMotorTargetVelocity(hub, 0, m0, &ack);
-        rhsp_setMotorTargetVelocity(hub, 1, m1, &ack);
-        rhsp_setMotorTargetVelocity(hub, 2, m2, &ack);
-        rhsp_setMotorTargetVelocity(hub, 3, m3, &ack);
+        double vx = msg->linear.x;
+        double vy = msg->linear.y;
+        double wz = msg->angular.z;
+        
+        double wheel_front_right = -((vx + vy) + (WHEEL_SEPARATION_WIDTH + WHEEL_SEPARATION_LENGTH)*wz)/WHEEL_RADIUS;
+        double wheel_rear_right = -((vx - vy) + (WHEEL_SEPARATION_WIDTH + WHEEL_SEPARATION_LENGTH)*wz)/WHEEL_RADIUS;
+        double wheel_front_left = ((vx - vy) - (WHEEL_SEPARATION_WIDTH + WHEEL_SEPARATION_LENGTH)*wz)/WHEEL_RADIUS;
+        double wheel_rear_left = ((vx + vy) - (WHEEL_SEPARATION_WIDTH + WHEEL_SEPARATION_LENGTH)*wz)/WHEEL_RADIUS;
+
+        rhsp_setMotorTargetVelocity(hub, 0, wheel_front_right * TICK_PER_RADIANS, &ack);
+        rhsp_setMotorTargetVelocity(hub, 1, wheel_rear_right * TICK_PER_RADIANS, &ack);
+        rhsp_setMotorTargetVelocity(hub, 2, wheel_front_left * TICK_PER_RADIANS, &ack);
+        rhsp_setMotorTargetVelocity(hub, 3, wheel_rear_left * TICK_PER_RADIANS, &ack);
     }
 
     void sendUpdate(){
