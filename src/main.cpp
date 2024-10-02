@@ -34,7 +34,7 @@ public:
     rhspNode(const std::string &node_name, bool intra_process_comms = false) :
         rclcpp_lifecycle::LifecycleNode(node_name, rclcpp::NodeOptions().use_intra_process_comms(intra_process_comms))
     {
-
+        this->declare_parameter("serial_port", "/dev/ttyUSB0");
     }
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
     on_configure(const rclcpp_lifecycle::State &)
@@ -48,11 +48,13 @@ public:
         m1v_publisher_ = this->create_publisher<std_msgs::msg::Int16>("m1/speed", 10);
         m2v_publisher_ = this->create_publisher<std_msgs::msg::Int16>("m2/speed", 10);
         m3v_publisher_ = this->create_publisher<std_msgs::msg::Int16>("m2/speed", 10);
+        serial_port = this->get_parameter("serial_port").as_string();
+
         if (!serial)
         {
             serial = new RhspSerial();
             rhsp_serialInit(serial);
-            switch(rhsp_serialOpen(serial, "/dev/ttyUSB0", 460800, 8, RHSP_SERIAL_PARITY_NONE, 1, RHSP_SERIAL_FLOW_CONTROL_NONE)){
+            switch(rhsp_serialOpen(serial, serial_port.c_str(), 460800, 8, RHSP_SERIAL_PARITY_NONE, 1, RHSP_SERIAL_FLOW_CONTROL_NONE)){
                 case RHSP_SERIAL_ERROR_OPENING:
                     RCLCPP_WARN(get_logger(), "Unable to connect serial to hub!!");
                     RCLCPP_WARN(get_logger(), "Serial error, unable to open.");
@@ -65,7 +67,7 @@ public:
             rhsp_close(hub);
             rhsp_serialClose(serial);
             rhsp_serialInit(serial);
-            switch(rhsp_serialOpen(serial, "/dev/ttyUSB0", 460800, 8, RHSP_SERIAL_PARITY_NONE, 1, RHSP_SERIAL_FLOW_CONTROL_NONE)){
+            switch(rhsp_serialOpen(serial, serial_port.c_str(), 460800, 8, RHSP_SERIAL_PARITY_NONE, 1, RHSP_SERIAL_FLOW_CONTROL_NONE)){
                 case RHSP_SERIAL_ERROR_OPENING:
                     RCLCPP_WARN(get_logger(), "Unable to connect serial to hub (after disconnecting)!!");
                     RCLCPP_WARN(get_logger(), "Serial error, unable to open.");
@@ -202,8 +204,11 @@ private:
                 m3v_publisher_->publish(std_msgs::msg::Int16().set__data(
                     a.motor3velocity_cps
                 ));
+                if(a.attentionRequired){
+                    RCLCPP_WARN(get_logger(), "status ATTENTION REQUIRED! motor flags: %d", a.motorStatus);
+                }
             }else{
-                RCLCPP_WARN(get_logger(), "bulk read err, returned %d", ack);
+                RCLCPP_WARN(get_logger(), "bulk read error. returned: %d", ack);
             }
         }
     }
@@ -211,6 +216,7 @@ private:
     RhspRevHub *hub;
     RhspSerial *serial;
     std::shared_ptr<rclcpp::TimerBase> timer_;
+    std::string serial_port = "/dev/ttyUSB0";
     rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr floatSubscriber;
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmdSubscriber;
 
