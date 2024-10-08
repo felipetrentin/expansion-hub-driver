@@ -39,9 +39,9 @@ static void fillBulkInputData(const RhspRevHub* hub, RhspBulkInputData* data)
     data->motorStatus = RHSP_ARRAY_BYTE(uint8_t, payload, 17);
 
     data->motor0velocity_cps = RHSP_ARRAY_WORD(int16_t, payload, 18);
-    data->motor0velocity_cps = RHSP_ARRAY_WORD(int16_t, payload, 20);
-    data->motor0velocity_cps = RHSP_ARRAY_WORD(int16_t, payload, 22);
-    data->motor0velocity_cps = RHSP_ARRAY_WORD(int16_t, payload, 24);
+    data->motor1velocity_cps = RHSP_ARRAY_WORD(int16_t, payload, 20);
+    data->motor2velocity_cps = RHSP_ARRAY_WORD(int16_t, payload, 22);
+    data->motor3velocity_cps = RHSP_ARRAY_WORD(int16_t, payload, 24);
 
     data->analog0_mV = RHSP_ARRAY_WORD(int16_t, payload, 26);
     data->analog1_mV = RHSP_ARRAY_WORD(int16_t, payload, 28);
